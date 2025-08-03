@@ -4,7 +4,6 @@ import bcrypt from 'bcrypt';
 import speakeasy from 'speakeasy';
 import qrcode from 'qrcode';
 import {generateAccessToken, generateRefreshToken, verifyRefreshToken} from '../utils/jwt';
-import users from "./users";
 
 const prisma = new PrismaClient();
 const router = Router();
@@ -17,7 +16,6 @@ router.post('/login', async (req, res) => {
     }
 
     try {
-        // Buscar por email o username
         const user = await prisma.user.findFirst({
             where: {
                 OR: [{ email: identifier }, { username: identifier }],
@@ -28,14 +26,12 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Comparar contraseñas
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         if (!user.twoFASecret) {
-            // Usuario autenticado pero necesita configurar 2FA
             return res.status(200).json({
                 step: 'setup_2fa',
                 message: 'User authenticated, but 2FA setup is required.',
@@ -43,7 +39,6 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        // Usuario autenticado, pasar al paso de verificación 2FA
         return res.status(200).json({
             step: 'verify_2fa',
             message: 'Please verify your 2FA code.',
@@ -64,24 +59,21 @@ router.post('/setup-2fa', async (req, res) => {
     try {
         const user = await prisma.user.findUnique({ where: { id: userId } });
 
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        if (!user) return res.status(404).json({ error: 'User doesnt exist' });
 
         if (user.twoFASecret) {
             return res.status(400).json({ error: '2FA is already set up' });
         }
 
-        // Generar secreto con Speakeasy
         const secret = speakeasy.generateSecret({
-            name: `${appName}:${user.email}`, // personalizado
+            name: `${appName}:${user.email}`,
         });
 
-        // Guardar temporalmente el secret.base32
         await prisma.user.update({
             where: { id: user.id },
             data: { twoFASecret: secret.base32 },
         });
 
-        // Generar código QR desde la otpauth_url
         const qrDataURL = await qrcode.toDataURL(secret.otpauth_url!);
 
         res.status(200).json({
@@ -111,12 +103,11 @@ router.post('/verify-2fa', async (req, res) => {
             return res.status(400).json({ error: 'User not found or 2FA not set up' });
         }
 
-        // Verificar el código con Speakeasy
         const isValid = speakeasy.totp.verify({
             secret: user.twoFASecret,
             encoding: 'base32',
             token,
-            window: 1, // permite ±1 intervalo (por si hay desincronización de tiempo)
+            window: 1,
         });
 
         if (!isValid) {
@@ -136,7 +127,6 @@ router.post('/verify-2fa', async (req, res) => {
             data: { refreshToken },
         });
 
-        // Autenticación completa con 2FA validado
         return res.status(200).json({
             message: '2FA verification successful. Login complete.',
             accessToken,
@@ -156,6 +146,7 @@ router.post('/refresh-token', async (req, res) => {
     }
 
     const payload = verifyRefreshToken(refreshToken);
+
     if (!payload) {
         return res.status(401).json({ error: 'Invalid refresh token' });
     }
@@ -213,7 +204,6 @@ router.post('/logout', async (req, res) => {
             return res.status(401).json({ error: 'Token mismatch' });
         }
 
-        // Invalida el refresh token
         await prisma.user.update({
             where: { id: user.id },
             data: { refreshToken: null },
