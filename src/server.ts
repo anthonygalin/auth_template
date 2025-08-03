@@ -8,6 +8,7 @@ app.use(express.json());
 
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/2fa', authRoutes);
 app.get('/', (_req, res) => {
     res.send('API is running 🚀');
 });

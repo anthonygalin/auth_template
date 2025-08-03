@@ -120,15 +120,3 @@ Servidor correrá en `http://localhost:3001`.
 - Usa variables de entorno en Postman para tokens JWT.
 
 ---
-
-## 🤝 Contribuciones
-
-Este proyecto está abierto a mejoras. Si quieres contribuir, abre un issue o pull request.
-
----
-
-Si quieres que te prepare el frontend con Vite para consumir esta API, o alguna otra funcionalidad, dime y seguimos.
-
----
-
-¿Querés que te genere también una plantilla para la documentación Swagger/OpenAPI?
