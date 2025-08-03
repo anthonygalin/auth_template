@@ -1,4 +1,4 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwt';
 
 enum AuthEnum {
@@ -9,9 +9,11 @@ type HeaderType = {
     authorization: AuthEnum
 }
 
-interface Request {
-    user: User;
-    headers: HeaderType;
+declare module 'express-serve-static-core' {
+    interface Request {
+        user: User;
+        headers: HeaderType;
+    }
 }
 
 export function authenticateJWT(req: Request, res: Response, next: NextFunction) {
