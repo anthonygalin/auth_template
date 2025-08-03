@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
     const existing = await prisma.user.findFirst({ where: { role: 0 } });
     if (existing) {
-        console.log("🚫 Super Admin already exists.");
+        console.log("Super Admin already exists.");
         return;
     }
 
