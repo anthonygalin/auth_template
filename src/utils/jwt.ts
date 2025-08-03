@@ -1,4 +1,4 @@
-import jwt, {JwtPayload} from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const REFRESH_SECRET = process.env.REFRESH_SECRET
@@ -18,7 +18,7 @@ export function generateRefreshToken(payload: object): string {
     return jwt.sign(payload, REFRESH_SECRET, { expiresIn: '1h' });
 }
 
-export function verifyToken(token: string): JwtPayload | null | string {
+export function verifyToken(token: string):any {
     if (!JWT_SECRET) {
         throw new Error('JWT_SECRET not set');
     }
@@ -29,7 +29,7 @@ export function verifyToken(token: string): JwtPayload | null | string {
     }
 }
 
-export function verifyRefreshToken(token: string): JwtPayload | null | string {
+export function verifyRefreshToken(token: string):any {
     if (!REFRESH_SECRET) {
         throw new Error('REFRESH_SECRET not set');
     }
