@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Request, Router } from 'express';
 import bcrypt from 'bcrypt';
 import { PrismaClient } from '@prisma/client';
 import { requireRole } from '../middlewares/auth';
@@ -7,10 +7,8 @@ import { authenticateJWT } from '../middlewares/authenticate';
 const prisma = new PrismaClient();
 const router = Router();
 
-// SuperAdmin (0) puede crear admin(1) y user(2)
-// Admin (1) solo puede crear user(2)
-router.post('/register', requireRole(1), authenticateJWT, async (req, res) => {
-    const currentUser = req.user; // Ya verificado por authenticateJWT
+router.post('/register', requireRole(1), authenticateJWT, async (req:Request, res) => {
+    const currentUser = req.user;
     const { email, username, password, role } = req.body;
 
     if (!email || !username || !password || role === undefined) {
@@ -18,21 +16,15 @@ router.post('/register', requireRole(1), authenticateJWT, async (req, res) => {
     }
 
     try {
-        // Validación de permisos
         if (currentUser.role === 0) {
-            // Super admin puede crear cualquier rol
-            // no hay restricción
         } else if (currentUser.role === 1) {
-            // Admin solo puede crear usuarios normales
             if (role !== 2) {
                 return res.status(403).json({ error: 'Admins can only create normal users' });
             }
         } else {
-            // Usuario normal no puede crear usuarios
             return res.status(403).json({ error: 'Permission denied' });
         }
 
-        // Check existentes
         const existingUser = await prisma.user.findFirst({
             where: {
                 OR: [
@@ -84,10 +76,8 @@ router.put('/users/:id', requireRole(2), authenticateJWT, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Si el usuario quiere editarse a sí mismo, siempre lo puede hacer
         const editingSelf = currentUser.id === targetUser.id;
 
-        // Reglas por rol
         if (!editingSelf) {
             if (currentUser.role === 2) {
                 return res.status(403).json({ error: 'Users can only edit themselves' });
@@ -98,7 +88,6 @@ router.put('/users/:id', requireRole(2), authenticateJWT, async (req, res) => {
             }
         }
 
-        // Validar que un admin no pueda cambiar el rol a admin o superadmin
         if (currentUser.role === 1 && role !== undefined && role !== 2) {
             return res.status(403).json({ error: 'Admins cannot assign elevated roles' });
         }
@@ -141,21 +130,17 @@ router.delete('/users/:id',requireRole(1), authenticateJWT, async (req, res) => 
         const deletingSelf = currentUser.id === targetUser.id;
 
         if (currentUser.role === 0) {
-            // Super admin puede eliminar a cualquiera excepto a sí mismo
             if (deletingSelf) {
                 return res.status(403).json({ error: 'Super admin cannot delete themselves' });
             }
         } else if (currentUser.role === 1) {
-            // Admin solo puede eliminar usuarios normales
             if (targetUser.role !== 2) {
                 return res.status(403).json({ error: 'Admins can only delete normal users' });
             }
-
             if (deletingSelf) {
                 return res.status(403).json({ error: 'Admins cannot delete themselves' });
             }
         } else {
-            // Usuario normal no puede eliminar a nadie
             return res.status(403).json({ error: 'Permission denied' });
         }
 

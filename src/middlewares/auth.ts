@@ -1,11 +1,15 @@
-import { Response, NextFunction } from 'express';
+import { Request,Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-interface Request {
-    user: User
+declare module 'express-serve-static-core' {
+    interface Request {
+        user: User
+    }
 }
+
+
 
 export function requireRole(minRole: number) {
     return async (req: Request, res: Response, next: NextFunction) => {
