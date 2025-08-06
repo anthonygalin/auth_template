@@ -1,6 +1,7 @@
 import express from 'express';
 import userRoutes from './routes/users';
 import authRoutes from './routes/auth';
+import twoFaRoutes from './routes/2fa';
 
 const app = express();
 
@@ -8,7 +9,7 @@ app.use(express.json());
 
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/2fa', authRoutes);
+app.use('/api/2fa', twoFaRoutes);
 app.get('/', (_req, res) => {
     res.send('API is running 🚀');
 });
